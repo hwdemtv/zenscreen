@@ -1,9 +1,16 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "com.siddharthvaddem.openscreen",
+  "appId": "com.siddharthvaddem.zenscreen",
+  "publish": [
+    {
+      "provider": "github",
+      "owner": "hwdemtv",
+      "repo": "zenscreen"
+    }
+  ],
   "asar": true,
-  "productName": "Openscreen",
+  "productName": "ZenScreen",
   "npmRebuild": true,
   "buildDependenciesFromSource": true,
   "compression": "normal",
@@ -35,12 +42,12 @@
         "arch": ["x64", "arm64"]
       }
     ],
-    "icon": "icons/icons/mac/icon.icns",
+    "icon": "icons/icons/icon.icns",
     "artifactName": "${productName}-Mac-${arch}-${version}-Installer.${ext}",
     "extendInfo": {
-      "NSAudioCaptureUsageDescription": "OpenScreen needs audio capture permission to record system audio.",
-      "NSMicrophoneUsageDescription": "OpenScreen needs microphone access to record voice audio.",
-      "NSCameraUsageDescription": "OpenScreen needs camera access to record webcam video.",
+      "NSAudioCaptureUsageDescription": "ZenScreen needs audio capture permission to record system audio.",
+      "NSMicrophoneUsageDescription": "ZenScreen needs microphone access to record voice audio.",
+      "NSCameraUsageDescription": "ZenScreen needs camera access to record webcam video.",
       "NSCameraUseContinuityCameraDeviceType": true,
       "com.apple.security.device.audio-input": true
     }
@@ -55,9 +62,10 @@
   },
   "win": {
     "target": [
-      "nsis"
+      "nsis",
+      "portable"
     ],
-    "icon": "icons/icons/win/icon.ico"
+    "icon": "icons/icons/icon.ico"
   },
   "nsis": {
     "oneClick": false,

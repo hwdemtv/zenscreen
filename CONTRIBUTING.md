@@ -43,7 +43,7 @@
 
 ## 报告问题
 
-如果你遇到 Bug 或有功能建议，请在仓库的 [Issues](https://github.com/huwei/zenscreen/issues) 部分提交 Issue。请提供尽可能详细的信息，帮助我们有效解决问题。
+如果你遇到 Bug 或有功能建议，请在仓库的 [Issues](https://github.com/hwdemtv/zenscreen/issues) 部分提交 Issue。请提供尽可能详细的信息，帮助我们有效解决问题。
 
 ## 代码风格指南
 

@@ -124,7 +124,7 @@ export function AddCustomFontDialog({ onFontAdded }: AddCustomFontDialogProps) {
 				<DialogHeader>
 					<DialogTitle>{t("customFont.dialogTitle")}</DialogTitle>
 					<DialogDescription className="text-slate-400">
-						Add a custom font from Google Fonts to use in your annotations.
+						{t("customFont.dialogDescription")}
 					</DialogDescription>
 				</DialogHeader>
 

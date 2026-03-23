@@ -88,7 +88,7 @@ export function AnnotationOverlay({
 					return (
 						<img
 							src={annotation.content}
-							alt="Annotation"
+							alt="Annotation image"
 							className="w-full h-full object-contain"
 							draggable={false}
 						/>

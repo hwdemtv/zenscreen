@@ -1127,7 +1127,9 @@ export function SettingsPanel({
 												: "text-slate-400 hover:text-slate-200",
 										)}
 									>
-										{key === "original" ? "Orig" : key.charAt(0).toUpperCase() + key.slice(1, 3)}
+										{key === "original"
+											? t("gifSettings.original")
+											: key.charAt(0).toUpperCase() + key.slice(1, 3)}
 									</button>
 								))}
 							</div>
@@ -1175,7 +1177,7 @@ export function SettingsPanel({
 						type="button"
 						onClick={() => {
 							window.electronAPI?.openExternalUrl(
-								"https://github.com/siddharthvaddem/openscreen/issues/new/choose",
+								"https://github.com/hwdemtv/zenscreen/issues/new/choose",
 							);
 						}}
 						className="flex-1 flex items-center justify-center gap-1.5 text-[10px] text-slate-500 hover:text-slate-300 py-1.5 transition-colors"
@@ -1186,7 +1188,7 @@ export function SettingsPanel({
 					<button
 						type="button"
 						onClick={() => {
-							window.electronAPI?.openExternalUrl("https://github.com/siddharthvaddem/openscreen");
+							window.electronAPI?.openExternalUrl("https://github.com/hwdemtv/zenscreen");
 						}}
 						className="flex-1 flex items-center justify-center gap-1.5 text-[10px] text-slate-500 hover:text-slate-300 py-1.5 transition-colors"
 					>

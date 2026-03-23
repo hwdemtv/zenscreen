@@ -22,7 +22,11 @@
 		"savedTo": "项目已保存至 {{path}}",
 		"failedToLoad": "加载项目失败",
 		"invalidFormat": "无效的项目文件格式",
-		"loadedFrom": "项目已从 {{path}} 加载"
+		"loadedFrom": "项目已从 {{path}} 加载",
+		"loadProjectFile": "加载项目文件"
+	},
+	"loading": {
+		"video": "正在加载视频..."
 	},
 	"recording": {
 		"failedCameraAccess": "请求摄像头权限失败。",
@@ -30,6 +34,8 @@
 		"systemAudioUnavailable": "系统音频不可用。将在无系统音频的情况下录制。",
 		"microphoneDenied": "麦克风权限被拒绝。录制将继续，但不包含音频。",
 		"cameraDenied": "摄像头权限被拒绝。录制将继续，但不包含摄像头画面。",
-		"permissionDenied": "录屏权限被拒绝。请允许屏幕录制。"
+		"permissionDenied": "录屏权限被拒绝。请允许屏幕录制。",
+		"failedToStart": "开始录制失败",
+		"failedToEnumerateAudio": "枚举音频设备失败"
 	}
 }

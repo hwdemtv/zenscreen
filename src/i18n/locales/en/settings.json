@@ -63,7 +63,25 @@
 	"gifSettings": {
 		"frameRate": "GIF Frame Rate",
 		"size": "GIF Size",
-		"loop": "Loop GIF"
+		"loop": "Loop GIF",
+		"frameRateLabel": "Frame Rate",
+		"outputSize": "Output Size",
+		"loopAnimation": "Loop Animation",
+		"loopAnimationDescription": "GIF will play continuously",
+		"sizePresets": {
+			"medium": "Medium (720p)",
+			"large": "Large (1080p)",
+			"original": "Original"
+		},
+		"frameRates": {
+			"fps15": "15 FPS - Balanced",
+			"fps20": "20 FPS - Smooth",
+			"fps25": "25 FPS - Very smooth",
+			"fps30": "30 FPS - Maximum"
+		}
+	},
+	"aspectRatio": {
+		"native": "Native"
 	},
 	"project": {
 		"save": "Save Project",
@@ -115,7 +133,14 @@
 		"invalidImageType": "Invalid file type",
 		"imageFormatsOnly": "Please upload a JPG, PNG, GIF, or WebP image file.",
 		"imageUploadSuccess": "Image uploaded successfully!",
-		"failedImageUpload": "Failed to upload image"
+		"failedImageUpload": "Failed to upload image",
+		"ariaToggleBold": "Toggle bold",
+		"ariaToggleItalic": "Toggle italic",
+		"ariaToggleUnderline": "Toggle underline",
+		"ariaAlignLeft": "Align left",
+		"ariaAlignCenter": "Align center",
+		"ariaAlignRight": "Align right",
+		"uploadedImageAlt": "Uploaded annotation"
 	},
 	"fontStyles": {
 		"classic": "Classic",
@@ -129,6 +154,7 @@
 	},
 	"customFont": {
 		"dialogTitle": "Add Google Font",
+		"dialogDescription": "Add a custom font from Google Fonts to use in your annotations.",
 		"urlLabel": "Google Fonts Import URL",
 		"urlPlaceholder": "https://fonts.googleapis.com/css2?family=Roboto&display=swap",
 		"urlHelp": "Get this from Google Fonts: Select a font → Click \"Get font\" → Copy the @import URL",

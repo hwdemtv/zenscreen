@@ -1,0 +1,39 @@
+{
+	"title": {
+		"activatePro": "Activar Pro",
+		"proLicenseActive": "Licencia Pro Activa"
+	},
+	"description": {
+		"active": "Tu dispositivo está completamente desbloqueado. Disfruta de todas las funciones premium.",
+		"inactive": "Ingresa tu License Key para desbloquear funciones premium y eliminar marcas de agua."
+	},
+	"badge": {
+		"pro": "PRO",
+		"upgrade": "Actualizar a PRO"
+	},
+	"status": {
+		"validUntil": "Válido hasta",
+		"lifetime": "Permanente"
+	},
+	"fields": {
+		"hardwareFingerprint": "Huella de Hardware",
+		"provideWhenPurchasing": "Proporciona esto al comprar",
+		"activationToken": "License Key",
+		"tokenPlaceholder": "Pega tu License Key aquí...",
+		"deviceId": "ID del Dispositivo"
+	},
+	"actions": {
+		"activate": "Activar ZenScreen",
+		"removeLicense": "Eliminar Licencia"
+	},
+	"feedback": {
+		"machineIdCopied": "ID de máquina copiado al portapapeles!",
+		"upgradeSuccess": "Actualizado a Pro exitosamente!",
+		"activateFailed": "Error al activar la licencia.",
+		"licenseRemoved": "Licencia eliminada.",
+		"loading": "Cargando..."
+	},
+	"watermark": {
+		"demo": "ZenScreen Demo"
+	}
+}

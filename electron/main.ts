@@ -8,12 +8,14 @@ import {
 	ipcMain,
 	Menu,
 	nativeImage,
+	protocol,
 	session,
 	systemPreferences,
 	Tray,
 } from "electron";
 import { mainT, setMainLocale } from "./i18n";
 import { registerIpcHandlers } from "./ipc/handlers";
+import { licenseService } from "./services/licenseService";
 import { createEditorWindow, createHudOverlayWindow, createSourceSelectorWindow } from "./windows";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -64,7 +66,7 @@ let tray: Tray | null = null;
 let selectedSourceName = "";
 
 // Tray Icons
-const defaultTrayIcon = getTrayIcon("openscreen.png");
+const defaultTrayIcon = getTrayIcon("zenscreen.png");
 const recordingTrayIcon = getTrayIcon("rec-button.png");
 
 function createWindow() {
@@ -154,34 +156,48 @@ function setupApplicationMenu() {
 		{
 			label: mainT("common", "actions.edit") || "Edit",
 			submenu: [
-				{ role: "undo" },
-				{ role: "redo" },
+				{ role: "undo", label: mainT("common", "actions.undo") || "Undo" },
+				{ role: "redo", label: mainT("common", "actions.redo") || "Redo" },
 				{ type: "separator" },
-				{ role: "cut" },
-				{ role: "copy" },
-				{ role: "paste" },
-				{ role: "selectAll" },
+				{ role: "cut", label: mainT("common", "actions.cut") || "Cut" },
+				{ role: "copy", label: mainT("common", "actions.copy") || "Copy" },
+				{ role: "paste", label: mainT("common", "actions.paste") || "Paste" },
+				{ role: "selectAll", label: mainT("common", "actions.selectAll") || "Select All" },
 			],
 		},
 		{
 			label: mainT("common", "actions.view") || "View",
 			submenu: [
-				{ role: "reload" },
-				{ role: "forceReload" },
-				{ role: "toggleDevTools" },
+				{ role: "reload", label: mainT("common", "actions.reload") || "Reload" },
+				{ role: "forceReload", label: mainT("common", "actions.forceReload") || "Force Reload" },
+				{
+					role: "toggleDevTools",
+					label: mainT("common", "actions.toggleDevTools") || "Toggle Developer Tools",
+				},
 				{ type: "separator" },
-				{ role: "resetZoom" },
-				{ role: "zoomIn" },
-				{ role: "zoomOut" },
+				{ role: "resetZoom", label: mainT("common", "actions.resetZoom") || "Actual Size" },
+				{ role: "zoomIn", label: mainT("common", "actions.zoomIn") || "Zoom In" },
+				{ role: "zoomOut", label: mainT("common", "actions.zoomOut") || "Zoom Out" },
 				{ type: "separator" },
-				{ role: "togglefullscreen" },
+				{
+					role: "togglefullscreen",
+					label: mainT("common", "actions.togglefullscreen") || "Toggle Full Screen",
+				},
 			],
 		},
 		{
 			label: mainT("common", "actions.window") || "Window",
 			submenu: isMac
-				? [{ role: "minimize" }, { role: "zoom" }, { type: "separator" }, { role: "front" }]
-				: [{ role: "minimize" }, { role: "close" }],
+				? [
+						{ role: "minimize", label: mainT("common", "actions.minimize") || "Minimize" },
+						{ role: "zoom" },
+						{ type: "separator" },
+						{ role: "front" },
+					]
+				: [
+						{ role: "minimize", label: mainT("common", "actions.minimize") || "Minimize" },
+						{ role: "close", label: mainT("common", "actions.closeWindow") || "Close" },
+					],
 		},
 	);
 
@@ -212,7 +228,9 @@ function getTrayIcon(filename: string) {
 function updateTrayMenu(recording: boolean = false) {
 	if (!tray) return;
 	const trayIcon = recording ? recordingTrayIcon : defaultTrayIcon;
-	const trayToolTip = recording ? `Recording: ${selectedSourceName}` : "OpenScreen";
+	const trayToolTip = recording
+		? `${mainT("common", "actions.recording") || "Recording"}: ${selectedSourceName}`
+		: "ZenScreen";
 	const menuTemplate = recording
 		? [
 				{
@@ -334,8 +352,63 @@ app.on("activate", () => {
 	}
 });
 
+// Register zenscreen:// protocol for local file access
+protocol.registerSchemesAsPrivileged([
+	{
+		scheme: "zenscreen",
+		privileges: {
+			standard: true,
+			secure: true,
+			supportFetchAPI: true,
+			stream: true,
+		},
+	},
+]);
+
+function registerZenscreenProtocol() {
+	protocol.registerFileProtocol("zenscreen", (request, callback) => {
+		const url = request.url.replace(/^zenscreen:\/\//, "");
+		const decodedPath = decodeURIComponent(url);
+
+		// Resolve absolute path
+		let filePath = decodedPath;
+		// Special handling for Windows drive letters (e.g., zenscreen:///C:/...)
+		if (filePath.startsWith("/")) {
+			filePath = filePath.slice(1);
+		}
+
+		// Security: Only allow files from RECORDINGS_DIR or app data
+		const normalizedPath = path.normalize(filePath);
+		const allowedPaths = [
+			RECORDINGS_DIR,
+			app.getPath("userData"),
+			app.getAppPath(), // For wallpapers in public/
+		];
+
+		const isAllowed = allowedPaths.some((allowed) => normalizedPath.startsWith(allowed));
+
+		if (isAllowed) {
+			callback({ path: normalizedPath });
+		} else {
+			console.error("Access denied to path:", normalizedPath);
+			callback({ error: -10 }); // Access denied
+		}
+	});
+}
+
 // Register all IPC handlers when app is ready
 app.whenReady().then(async () => {
+	registerZenscreenProtocol();
+	// Detect and set initial locale based on system environment
+	const systemLocale = app.getLocale().toLowerCase();
+	if (systemLocale.startsWith("zh")) {
+		setMainLocale("zh-CN");
+	} else if (systemLocale.startsWith("es")) {
+		setMainLocale("es");
+	} else {
+		setMainLocale("en");
+	}
+
 	// Allow microphone/media permission checks
 	session.defaultSession.setPermissionCheckHandler((_webContents, permission) => {
 		const allowed = ["media", "audioCapture", "microphone", "videoCapture", "camera"];
@@ -363,6 +436,13 @@ app.whenReady().then(async () => {
 		setMainLocale(locale);
 		setupApplicationMenu();
 		updateTrayMenu();
+
+		// Broadcast to all windows
+		for (const win of BrowserWindow.getAllWindows()) {
+			if (!win.isDestroyed()) {
+				win.webContents.send("locale-changed", locale);
+			}
+		}
 	});
 
 	createTray();
@@ -370,6 +450,8 @@ app.whenReady().then(async () => {
 	setupApplicationMenu();
 	// Ensure recordings directory exists
 	await ensureRecordingsDir();
+
+	await licenseService.initialize();
 
 	registerIpcHandlers(
 		createEditorWindowWrapper,

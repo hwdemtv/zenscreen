@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*" # 当推送以 v 开头的标签（如 v1.2.0）时触发
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Check out git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22 # 与 package.json 中的引擎版本保持一致
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build and Publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 如果你有 macOS 证书，可以添加以下变量。否则 macOS 版本将无法签名。
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+        run: |
+          if [ "${{ matrix.os }}" = "macos-latest" ]; then
+            npm run build:mac -- --publish always
+          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
+            npm run build:win -- --publish always
+          else
+            npm run build:linux -- --publish always
+          fi
+        shell: bash

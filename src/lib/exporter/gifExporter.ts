@@ -45,6 +45,7 @@ interface GifExporterConfig {
 	annotationRegions?: AnnotationRegion[];
 	previewWidth?: number;
 	previewHeight?: number;
+	watermarkText?: string;
 	onProgress?: (progress: ExportProgress) => void;
 }
 
@@ -146,6 +147,7 @@ export class GifExporter {
 				speedRegions: this.config.speedRegions,
 				previewWidth: this.config.previewWidth,
 				previewHeight: this.config.previewHeight,
+				watermarkText: this.config.watermarkText,
 			});
 			await this.renderer.initialize();
 

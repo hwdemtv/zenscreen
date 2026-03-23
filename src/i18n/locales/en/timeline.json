@@ -20,7 +20,16 @@
 		"speedItem": "Speed {{index}}",
 		"annotationItem": "Annotation",
 		"imageItem": "Image",
-		"emptyText": "Empty text"
+		"emptyText": "Empty text",
+		"trim": "Trim",
+		"speed": "Speed"
+	},
+	"itemActions": {
+		"resizeLeft": "Resize left",
+		"resizeRight": "Resize right"
+	},
+	"keyframe": {
+		"title": "Keyframe @ {{time}}ms (drag to move, Delete/Backspace to remove)"
 	},
 	"emptyState": {
 		"noVideo": "No Video Loaded",

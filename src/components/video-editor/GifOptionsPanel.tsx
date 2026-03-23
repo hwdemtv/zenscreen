@@ -6,6 +6,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { useScopedT } from "@/contexts/I18nContext";
 import {
 	GIF_FRAME_RATES,
 	GIF_SIZE_PRESETS,
@@ -24,6 +25,19 @@ interface GifOptionsPanelProps {
 	disabled?: boolean;
 }
 
+const SIZE_PRESET_KEYS: Record<GifSizePreset, string> = {
+	medium: "gifSettings.sizePresets.medium",
+	large: "gifSettings.sizePresets.large",
+	original: "gifSettings.sizePresets.original",
+};
+
+const FRAME_RATE_KEYS: Record<GifFrameRate, string> = {
+	15: "gifSettings.frameRates.fps15",
+	20: "gifSettings.frameRates.fps20",
+	25: "gifSettings.frameRates.fps25",
+	30: "gifSettings.frameRates.fps30",
+};
+
 export function GifOptionsPanel({
 	frameRate,
 	onFrameRateChange,
@@ -34,9 +48,16 @@ export function GifOptionsPanel({
 	outputDimensions,
 	disabled = false,
 }: GifOptionsPanelProps) {
-	const sizePresetOptions = Object.entries(GIF_SIZE_PRESETS).map(([key, value]) => ({
+	const t = useScopedT("settings");
+
+	const sizePresetOptions = Object.keys(GIF_SIZE_PRESETS).map((key) => ({
 		value: key as GifSizePreset,
-		label: value.label,
+		label: t(SIZE_PRESET_KEYS[key as GifSizePreset]),
+	}));
+
+	const frameRateOptions = GIF_FRAME_RATES.map((rate) => ({
+		value: rate.value,
+		label: t(FRAME_RATE_KEYS[rate.value]),
 	}));
 
 	return (
@@ -44,7 +65,7 @@ export function GifOptionsPanel({
 			{/* Frame Rate */}
 			<div className="space-y-2">
 				<label className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-					Frame Rate
+					{t("gifSettings.frameRateLabel")}
 				</label>
 				<Select
 					value={String(frameRate)}
@@ -55,13 +76,13 @@ export function GifOptionsPanel({
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent className="bg-[#1a1a1f] border-white/10 z-[100]">
-						{GIF_FRAME_RATES.map((rate) => (
+						{frameRateOptions.map((option) => (
 							<SelectItem
-								key={rate.value}
-								value={String(rate.value)}
+								key={option.value}
+								value={String(option.value)}
 								className="text-slate-200 focus:bg-white/10 focus:text-white"
 							>
-								{rate.label}
+								{option.label}
 							</SelectItem>
 						))}
 					</SelectContent>
@@ -71,7 +92,7 @@ export function GifOptionsPanel({
 			{/* Size Preset */}
 			<div className="space-y-2">
 				<label className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-					Output Size
+					{t("gifSettings.outputSize")}
 				</label>
 				<Select
 					value={sizePreset}
@@ -94,15 +115,17 @@ export function GifOptionsPanel({
 					</SelectContent>
 				</Select>
 				<div className="text-xs text-slate-500">
-					Output: {outputDimensions.width} × {outputDimensions.height}px
+					{outputDimensions.width} × {outputDimensions.height}px
 				</div>
 			</div>
 
 			{/* Loop Toggle */}
 			<div className="flex items-center justify-between py-2">
 				<div>
-					<label className="text-sm font-medium text-slate-200">Loop Animation</label>
-					<p className="text-xs text-slate-500">GIF will play continuously</p>
+					<label className="text-sm font-medium text-slate-200">
+						{t("gifSettings.loopAnimation")}
+					</label>
+					<p className="text-xs text-slate-500">{t("gifSettings.loopAnimationDescription")}</p>
 				</div>
 				<Switch checked={loop} onCheckedChange={onLoopChange} disabled={disabled} />
 			</div>

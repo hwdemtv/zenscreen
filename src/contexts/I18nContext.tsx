@@ -48,6 +48,11 @@ function getInitialLocale(): Locale {
 	try {
 		const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
 		if (stored && isSupportedLocale(stored)) return stored;
+
+		// Try to detect from system/browser language
+		const navLang = navigator.language.toLowerCase();
+		if (navLang.startsWith("zh")) return "zh-CN";
+		if (navLang.startsWith("es")) return "es";
 	} catch {
 		// localStorage may be unavailable
 	}
@@ -72,6 +77,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		document.documentElement.lang = locale;
 	}, [locale]);
+
+	useEffect(() => {
+		const unsubscribe = window.electronAPI?.onLocaleChanged?.((newLocale: string) => {
+			if (isSupportedLocale(newLocale)) {
+				setLocaleState(newLocale);
+			}
+		});
+		return () => unsubscribe?.();
+	}, []);
 
 	const t = useCallback(
 		(qualifiedKey: string, vars?: TranslateVars): string => {

@@ -22,7 +22,11 @@
 		"savedTo": "Proyecto guardado en {{path}}",
 		"failedToLoad": "Error al cargar el proyecto",
 		"invalidFormat": "Formato de archivo de proyecto no válido",
-		"loadedFrom": "Proyecto cargado desde {{path}}"
+		"loadedFrom": "Proyecto cargado desde {{path}}",
+		"loadProjectFile": "Cargar archivo de proyecto"
+	},
+	"loading": {
+		"video": "Cargando video..."
 	},
 	"recording": {
 		"failedCameraAccess": "Error al solicitar acceso a la cámara.",
@@ -30,6 +34,8 @@
 		"systemAudioUnavailable": "Audio del sistema no disponible. Grabando sin audio del sistema.",
 		"microphoneDenied": "Acceso al micrófono denegado. La grabación continuará sin audio.",
 		"cameraDenied": "Acceso a la cámara denegado. La grabación continuará sin cámara web.",
-		"permissionDenied": "Permiso de grabación denegado. Por favor permite la grabación de pantalla."
+		"permissionDenied": "Permiso de grabación denegado. Por favor permite la grabación de pantalla.",
+		"failedToStart": "Error al iniciar la grabación",
+		"failedToEnumerateAudio": "Error al enumerar dispositivos de audio"
 	}
 }

@@ -84,26 +84,27 @@ export class StreamingVideoDecoder {
 	private metadata: DecodedVideoInfo | null = null;
 
 	private async loadSourceFile(videoUrl: string): Promise<{ file: File; blob: Blob }> {
-		const isRemoteUrl = /^(https?:|blob:|data:)/i.test(videoUrl);
+		const isRemoteUrl = /^(https?:|blob:|data:|zenscreen:)/i.test(videoUrl);
 
-		if (!isRemoteUrl && window.electronAPI?.readBinaryFile) {
+		// In Worker, we don't have access to electronAPI, but zenscreen:// protocol
+		// should work with fetch() if registered correctly.
+		if (!isRemoteUrl && typeof window !== "undefined" && window.electronAPI?.readBinaryFile) {
 			const result = await this.withTimeout(
 				window.electronAPI.readBinaryFile(videoUrl),
 				SOURCE_LOAD_TIMEOUT_MS,
 				"Timed out while loading the source video.",
 			);
-			if (!result.success || !result.data) {
-				throw new Error(result.message || result.error || "Failed to read source video");
+			if (result.success && result.data) {
+				const filename = (result.path || videoUrl).split(/[\\/]/).pop() || "video";
+				const blob = new Blob([result.data]);
+				return {
+					blob,
+					file: new File([blob], filename, { type: blob.type || "application/octet-stream" }),
+				};
 			}
-
-			const filename = (result.path || videoUrl).split(/[\\/]/).pop() || "video";
-			const blob = new Blob([result.data]);
-			return {
-				blob,
-				file: new File([blob], filename, { type: blob.type || "application/octet-stream" }),
-			};
 		}
 
+		console.log(`[StreamingVideoDecoder] Fetching: ${videoUrl}`);
 		const response = await this.withTimeout(
 			fetch(videoUrl),
 			SOURCE_LOAD_TIMEOUT_MS,
@@ -128,7 +129,14 @@ export class StreamingVideoDecoder {
 		const { file } = await this.loadSourceFile(videoUrl);
 
 		// Relative URL so it resolves correctly in both dev (http) and packaged (file://) builds
-		const wasmUrl = new URL("./wasm/web-demuxer.wasm", window.location.href).href;
+		let wasmUrl: string;
+		if (typeof window !== "undefined") {
+			wasmUrl = new URL("./wasm/web-demuxer.wasm", window.location.href).href;
+		} else {
+			// In Worker, location is available
+			wasmUrl = new URL("./wasm/web-demuxer.wasm", (self as any).location.href).href;
+		}
+
 		this.demuxer = new WebDemuxer({ wasmFilePath: wasmUrl });
 		await this.withTimeout(
 			this.demuxer.load(file),
@@ -551,14 +559,16 @@ export class StreamingVideoDecoder {
 
 	private withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
 		return new Promise<T>((resolve, reject) => {
-			const timer = window.setTimeout(() => reject(new Error(message)), timeoutMs);
+			// Use self.setTimeout for Worker compatibility (window is undefined in Worker context)
+			const globalScope = typeof window !== "undefined" ? window : self;
+			const timer = globalScope.setTimeout(() => reject(new Error(message)), timeoutMs);
 			promise.then(
 				(value) => {
-					window.clearTimeout(timer);
+					globalScope.clearTimeout(timer);
 					resolve(value);
 				},
 				(error) => {
-					window.clearTimeout(timer);
+					globalScope.clearTimeout(timer);
 					reject(error);
 				},
 			);

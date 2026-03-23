@@ -24,7 +24,7 @@ import { useScopedT } from "@/contexts/I18nContext";
 import { useShortcuts } from "@/contexts/ShortcutsContext";
 import { matchesShortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
-import { ASPECT_RATIOS, type AspectRatio, getAspectRatioLabel } from "@/utils/aspectRatioUtils";
+import { ASPECT_RATIOS, type AspectRatio } from "@/utils/aspectRatioUtils";
 import { formatShortcut } from "@/utils/platformUtils";
 import { TutorialHelp } from "../TutorialHelp";
 import type {
@@ -765,6 +765,15 @@ export default function TimelineEditor({
 	onAspectRatioChange,
 }: TimelineEditorProps) {
 	const t = useScopedT("timeline");
+	const tSettings = useScopedT("settings");
+
+	// Helper to get aspect ratio label with i18n support
+	const getAspectRatioLabel = useCallback(
+		(ratio: AspectRatio): string => {
+			return ratio === "native" ? tSettings("aspectRatio.native") : ratio;
+		},
+		[tSettings],
+	);
 	const totalMs = useMemo(() => Math.max(0, Math.round(videoDuration * 1000)), [videoDuration]);
 	const currentTimeMs = useMemo(() => Math.round(currentTime * 1000), [currentTime]);
 	const timelineScale = useMemo(() => calculateTimelineScale(videoDuration), [videoDuration]);

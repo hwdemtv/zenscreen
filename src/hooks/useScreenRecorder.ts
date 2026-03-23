@@ -2,6 +2,11 @@ import { fixWebmDuration } from "@fix-webm-duration/fix";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useScopedT } from "@/contexts/I18nContext";
+import {
+	type AudioMixConfig,
+	DEFAULT_AUDIO_MIX_CONFIG,
+	getOptimalSampleRate,
+} from "@/lib/audio-utils";
 import { requestCameraAccess } from "@/lib/requestCameraAccess";
 
 const TARGET_FRAME_RATE = 60;
@@ -34,7 +39,6 @@ const WEBCAM_FILE_SUFFIX = "-webcam";
 const AUDIO_BITRATE_VOICE = 128_000;
 const AUDIO_BITRATE_SYSTEM = 192_000;
 
-const MIC_GAIN_BOOST = 1.4;
 const WEBCAM_TARGET_WIDTH = 1280;
 const WEBCAM_TARGET_HEIGHT = 720;
 const WEBCAM_TARGET_FRAME_RATE = 30;
@@ -51,6 +55,9 @@ type UseScreenRecorderReturn = {
 	setSystemAudioEnabled: (enabled: boolean) => void;
 	webcamEnabled: boolean;
 	setWebcamEnabled: (enabled: boolean) => Promise<boolean>;
+	stream?: MediaStream | null;
+	audioMixConfig: AudioMixConfig;
+	setAudioMixConfig: (config: Partial<AudioMixConfig>) => void;
 };
 
 type RecorderHandle = {
@@ -87,6 +94,8 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 	const [microphoneDeviceId, setMicrophoneDeviceId] = useState<string | undefined>(undefined);
 	const [systemAudioEnabled, setSystemAudioEnabled] = useState(false);
 	const [webcamEnabled, setWebcamEnabledState] = useState(false);
+	const [audioMixConfig, setAudioMixConfigState] =
+		useState<AudioMixConfig>(DEFAULT_AUDIO_MIX_CONFIG);
 	const screenRecorder = useRef<RecorderHandle | null>(null);
 	const webcamRecorder = useRef<RecorderHandle | null>(null);
 	const stream = useRef<MediaStream | null>(null);
@@ -152,6 +161,10 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			});
 			mixingContext.current = null;
 		}
+	}, []);
+
+	const setAudioMixConfig = useCallback((config: Partial<AudioMixConfig>) => {
+		setAudioMixConfigState((prev) => ({ ...prev, ...config }));
 	}, []);
 
 	const setWebcamEnabled = useCallback(
@@ -437,15 +450,34 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			const micAudioTrack = microphoneStream.current?.getAudioTracks()[0];
 
 			if (systemAudioTrack && micAudioTrack) {
-				const ctx = new AudioContext();
+				// Get optimal sample rate from both audio tracks
+				const sampleRate = getOptimalSampleRate(systemAudioTrack, micAudioTrack);
+
+				// Create AudioContext with optimal sample rate
+				const ctx = new AudioContext({ sampleRate });
 				mixingContext.current = ctx;
+				if (ctx.state === "suspended") {
+					await ctx.resume();
+				}
+
+				console.log(
+					`Audio mixing: sampleRate=${ctx.sampleRate}Hz, systemGain=${audioMixConfig.systemGain}, micGain=${audioMixConfig.micGain}`,
+				);
+
 				const systemSource = ctx.createMediaStreamSource(new MediaStream([systemAudioTrack]));
 				const micSource = ctx.createMediaStreamSource(new MediaStream([micAudioTrack]));
+
+				const systemGain = ctx.createGain();
+				systemGain.gain.value = audioMixConfig.systemGain;
+
 				const micGain = ctx.createGain();
-				micGain.gain.value = MIC_GAIN_BOOST;
+				micGain.gain.value = audioMixConfig.micGain;
+
 				const destination = ctx.createMediaStreamDestination();
-				systemSource.connect(destination);
+
+				systemSource.connect(systemGain).connect(destination);
 				micSource.connect(micGain).connect(destination);
+
 				stream.current.addTrack(destination.stream.getAudioTracks()[0]);
 			} else if (systemAudioTrack) {
 				stream.current.addTrack(systemAudioTrack);
@@ -535,7 +567,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			}
 		} catch (error) {
 			console.error("Failed to start recording:", error);
-			const errorMsg = error instanceof Error ? error.message : "Failed to start recording";
+			const errorMsg = error instanceof Error ? error.message : t("recording.failedToStart");
 			if (errorMsg.includes("Permission denied") || errorMsg.includes("NotAllowedError")) {
 				toast.error(t("recording.permissionDenied"));
 			} else {
@@ -602,5 +634,8 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		setSystemAudioEnabled,
 		webcamEnabled,
 		setWebcamEnabled,
+		stream: stream.current,
+		audioMixConfig,
+		setAudioMixConfig,
 	};
 }

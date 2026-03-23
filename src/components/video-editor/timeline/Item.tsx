@@ -2,6 +2,7 @@ import type { Span } from "dnd-timeline";
 import { useItem } from "dnd-timeline";
 import { Gauge, MessageSquare, Scissors, ZoomIn } from "lucide-react";
 import { useMemo } from "react";
+import { useScopedT } from "@/contexts/I18nContext";
 import { cn } from "@/lib/utils";
 import glassStyles from "./ItemGlass.module.css";
 
@@ -48,6 +49,7 @@ export default function Item({
 	variant = "zoom",
 	children,
 }: ItemProps) {
+	const t = useScopedT("timeline");
 	const { setNodeRef, attributes, listeners, itemStyle, itemContentStyle } = useItem({
 		id,
 		span,
@@ -110,7 +112,7 @@ export default function Item({
 							opacity: 0.9,
 							background: endCapColor,
 						}}
-						title="Resize left"
+						title={t("itemActions.resizeLeft")}
 					/>
 					<div
 						className={cn(glassStyles.zoomEndCap, glassStyles.right)}
@@ -121,7 +123,7 @@ export default function Item({
 							opacity: 0.9,
 							background: endCapColor,
 						}}
-						title="Resize right"
+						title={t("itemActions.resizeRight")}
 					/>
 					{/* Content */}
 					<div className="relative z-10 flex flex-col items-center justify-center text-white/90 opacity-80 group-hover:opacity-100 transition-opacity select-none overflow-hidden">
@@ -137,14 +139,14 @@ export default function Item({
 								<>
 									<Scissors className="w-3.5 h-3.5 shrink-0" />
 									<span className="text-[11px] font-semibold tracking-tight whitespace-nowrap">
-										Trim
+										{t("item.trim")}
 									</span>
 								</>
 							) : isSpeed ? (
 								<>
 									<Gauge className="w-3.5 h-3.5 shrink-0" />
 									<span className="text-[11px] font-semibold tracking-tight whitespace-nowrap">
-										{speedValue !== undefined ? `${speedValue}×` : "Speed"}
+										{speedValue !== undefined ? `${speedValue}×` : t("item.speed")}
 									</span>
 								</>
 							) : (

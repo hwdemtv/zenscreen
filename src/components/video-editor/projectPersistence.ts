@@ -67,8 +67,8 @@ function clamp(value: number, min: number, max: number) {
 	return Math.min(max, Math.max(min, value));
 }
 
-function isFileUrl(value: string): boolean {
-	return /^file:\/\//i.test(value);
+function isZenscreenUrl(value: string): boolean {
+	return /^zenscreen:\/\//i.test(value);
 }
 
 function encodePathSegments(pathname: string, keepWindowsDrive = false): string {
@@ -89,28 +89,28 @@ export function toFileUrl(filePath: string): string {
 
 	// Windows drive path: C:/Users/...
 	if (/^[a-zA-Z]:\//.test(normalized)) {
-		return `file://${encodePathSegments(`/${normalized}`, true)}`;
+		return `zenscreen://${encodePathSegments(`/${normalized}`, true)}`;
 	}
 
 	// UNC path: //server/share/...
 	if (normalized.startsWith("//")) {
 		const [host, ...pathParts] = normalized.replace(/^\/+/, "").split("/");
 		const encodedPath = pathParts.map((part) => encodeURIComponent(part)).join("/");
-		return encodedPath ? `file://${host}/${encodedPath}` : `file://${host}/`;
+		return encodedPath ? `zenscreen://${host}/${encodedPath}` : `zenscreen://${host}/`;
 	}
 
 	const absolutePath = normalized.startsWith("/") ? normalized : `/${normalized}`;
-	return `file://${encodePathSegments(absolutePath)}`;
+	return `zenscreen://${encodePathSegments(absolutePath)}`;
 }
 
 export function fromFileUrl(fileUrl: string): string {
 	const value = fileUrl.trim();
-	if (!isFileUrl(value)) {
+	if (!isZenscreenUrl(value) && !/^file:\/\//i.test(value)) {
 		return fileUrl;
 	}
 
 	try {
-		const url = new URL(value);
+		const url = new URL(value.replace(/^zenscreen:/i, "http:")); // workaround for URL parser
 		const pathname = decodeURIComponent(url.pathname);
 
 		if (url.host && url.host !== "localhost") {
@@ -123,7 +123,7 @@ export function fromFileUrl(fileUrl: string): string {
 
 		return pathname;
 	} catch {
-		const rawFallbackPath = value.replace(/^file:\/\//i, "");
+		const rawFallbackPath = value.replace(/^(zenscreen|file):\/\//i, "");
 		let fallbackPath = rawFallbackPath;
 		try {
 			fallbackPath = decodeURIComponent(rawFallbackPath);

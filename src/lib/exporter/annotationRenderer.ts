@@ -37,7 +37,7 @@ function parseSvgPath(
 }
 
 function renderArrow(
-	ctx: CanvasRenderingContext2D,
+	ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
 	direction: ArrowDirection,
 	color: string,
 	strokeWidth: number,
@@ -97,7 +97,7 @@ function renderArrow(
 }
 
 function renderText(
-	ctx: CanvasRenderingContext2D,
+	ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
 	annotation: AnnotationRegion,
 	x: number,
 	y: number,
@@ -216,7 +216,7 @@ function renderText(
 }
 
 async function renderImage(
-	ctx: CanvasRenderingContext2D,
+	ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
 	annotation: AnnotationRegion,
 	x: number,
 	y: number,
@@ -227,39 +227,39 @@ async function renderImage(
 		return;
 	}
 
-	return new Promise((resolve) => {
-		const img = new Image();
-		img.onload = () => {
-			// Preserve aspect ratio - contain the image within the bounds
-			const imgAspect = img.width / img.height;
-			const boxAspect = width / height;
+	try {
+		const response = await fetch(annotation.content);
+		const blob = await response.blob();
+		const img = await createImageBitmap(blob);
 
-			let drawWidth = width;
-			let drawHeight = height;
-			let drawX = x;
-			let drawY = y;
+		// Preserve aspect ratio - contain the image within the bounds
+		const imgWidth = img.width;
+		const imgHeight = img.height;
+		const imgAspect = imgWidth / imgHeight;
+		const boxAspect = width / height;
 
-			if (imgAspect > boxAspect) {
-				drawHeight = width / imgAspect;
-				drawY = y + (height - drawHeight) / 2;
-			} else {
-				drawWidth = height * imgAspect;
-				drawX = x + (width - drawWidth) / 2;
-			}
+		let drawWidth = width;
+		let drawHeight = height;
+		let drawX = x;
+		let drawY = y;
 
-			ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-			resolve();
-		};
-		img.onerror = () => {
-			console.error("[AnnotationRenderer] Failed to load image annotation");
-			resolve();
-		};
-		img.src = annotation.content;
-	});
+		if (imgAspect > boxAspect) {
+			drawHeight = width / imgAspect;
+			drawY = y + (height - drawHeight) / 2;
+		} else {
+			drawWidth = height * imgAspect;
+			drawX = x + (width - drawWidth) / 2;
+		}
+
+		ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+		img.close();
+	} catch (error) {
+		console.error("[AnnotationRenderer] Failed to load image annotation:", error);
+	}
 }
 
 export async function renderAnnotations(
-	ctx: CanvasRenderingContext2D,
+	ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
 	annotations: AnnotationRegion[],
 	canvasWidth: number,
 	canvasHeight: number,

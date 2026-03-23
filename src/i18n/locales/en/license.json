@@ -1,0 +1,39 @@
+{
+	"title": {
+		"activatePro": "Activate Pro",
+		"proLicenseActive": "Pro License Active"
+	},
+	"description": {
+		"active": "Your device is fully unlocked. Enjoy all premium features.",
+		"inactive": "Enter your activation token to unlock premium features and remove watermarks."
+	},
+	"badge": {
+		"pro": "PRO",
+		"upgrade": "Upgrade to PRO"
+	},
+	"status": {
+		"validUntil": "Valid until",
+		"lifetime": "Lifetime"
+	},
+	"fields": {
+		"hardwareFingerprint": "Hardware Fingerprint",
+		"provideWhenPurchasing": "Provide this when purchasing",
+		"activationToken": "License Key",
+		"tokenPlaceholder": "Paste your License Key here...",
+		"deviceId": "Device ID"
+	},
+	"actions": {
+		"activate": "Activate ZenScreen",
+		"removeLicense": "Remove License"
+	},
+	"feedback": {
+		"machineIdCopied": "Machine ID copied to clipboard!",
+		"upgradeSuccess": "Successfully upgraded to Pro!",
+		"activateFailed": "Failed to activate license.",
+		"licenseRemoved": "License removed.",
+		"loading": "Loading..."
+	},
+	"watermark": {
+		"demo": "ZenScreen Demo"
+	}
+}

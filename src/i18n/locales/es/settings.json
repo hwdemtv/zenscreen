@@ -63,7 +63,25 @@
 	"gifSettings": {
 		"frameRate": "Velocidad de cuadros del GIF",
 		"size": "Tamaño del GIF",
-		"loop": "Repetir GIF"
+		"loop": "Repetir GIF",
+		"frameRateLabel": "Velocidad de cuadros",
+		"outputSize": "Tamaño de salida",
+		"loopAnimation": "Animación en bucle",
+		"loopAnimationDescription": "El GIF se reproducirá continuamente",
+		"sizePresets": {
+			"medium": "Mediano (720p)",
+			"large": "Grande (1080p)",
+			"original": "Original"
+		},
+		"frameRates": {
+			"fps15": "15 FPS - Equilibrado",
+			"fps20": "20 FPS - Fluida",
+			"fps25": "25 FPS - Muy fluida",
+			"fps30": "30 FPS - Máxima"
+		}
+	},
+	"aspectRatio": {
+		"native": "Nativa"
 	},
 	"project": {
 		"save": "Guardar proyecto",
@@ -115,7 +133,14 @@
 		"invalidImageType": "Tipo de archivo no válido",
 		"imageFormatsOnly": "Por favor sube un archivo de imagen JPG, PNG, GIF o WebP.",
 		"imageUploadSuccess": "¡Imagen subida exitosamente!",
-		"failedImageUpload": "Error al subir la imagen"
+		"failedImageUpload": "Error al subir la imagen",
+		"ariaToggleBold": "Alternar negrita",
+		"ariaToggleItalic": "Alternar cursiva",
+		"ariaToggleUnderline": "Alternar subrayado",
+		"ariaAlignLeft": "Alinear izquierda",
+		"ariaAlignCenter": "Alinear centro",
+		"ariaAlignRight": "Alinear derecha",
+		"uploadedImageAlt": "Anotación subida"
 	},
 	"fontStyles": {
 		"classic": "Clásico",
@@ -129,6 +154,7 @@
 	},
 	"customFont": {
 		"dialogTitle": "Agregar fuente de Google",
+		"dialogDescription": "Agrega una fuente personalizada de Google Fonts para usar en tus anotaciones.",
 		"urlLabel": "URL de importación de Google Fonts",
 		"urlPlaceholder": "https://fonts.googleapis.com/css2?family=Roboto&display=swap",
 		"urlHelp": "Obtén esto de Google Fonts: Selecciona una fuente → Haz clic en \"Get font\" → Copia la URL de @import",

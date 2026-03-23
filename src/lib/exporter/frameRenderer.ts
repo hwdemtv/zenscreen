@@ -66,6 +66,8 @@ interface FrameRenderConfig {
 	speedRegions?: SpeedRegion[];
 	previewWidth?: number;
 	previewHeight?: number;
+	canvas?: HTMLCanvasElement | OffscreenCanvas;
+	watermarkText?: string;
 }
 
 interface AnimationState {
@@ -94,14 +96,14 @@ export class FrameRenderer {
 	private cameraContainer: Container | null = null;
 	private videoContainer: Container | null = null;
 	private videoSprite: Sprite | null = null;
-	private backgroundSprite: HTMLCanvasElement | null = null;
+	private backgroundSprite: HTMLCanvasElement | OffscreenCanvas | null = null;
 	private maskGraphics: Graphics | null = null;
 	private blurFilter: BlurFilter | null = null;
 	private motionBlurFilter: MotionBlurFilter | null = null;
-	private shadowCanvas: HTMLCanvasElement | null = null;
-	private shadowCtx: CanvasRenderingContext2D | null = null;
-	private compositeCanvas: HTMLCanvasElement | null = null;
-	private compositeCtx: CanvasRenderingContext2D | null = null;
+	private shadowCanvas: HTMLCanvasElement | OffscreenCanvas | null = null;
+	private shadowCtx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null = null;
+	private compositeCanvas: HTMLCanvasElement | OffscreenCanvas | null = null;
+	private compositeCtx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null = null;
 	private config: FrameRenderConfig;
 	private animationState: AnimationState;
 	private layoutCache: LayoutCache | null = null;
@@ -123,14 +125,22 @@ export class FrameRenderer {
 
 	async initialize(): Promise<void> {
 		// Create canvas for rendering
-		const canvas = document.createElement("canvas");
+		const canvas =
+			this.config.canvas ||
+			(typeof document !== "undefined"
+				? document.createElement("canvas")
+				: (new OffscreenCanvas(
+						this.config.width,
+						this.config.height,
+					) as unknown as HTMLCanvasElement));
+
 		canvas.width = this.config.width;
 		canvas.height = this.config.height;
 
 		// Try to set colorSpace if supported (may not be available on all platforms)
 		try {
 			if (canvas && "colorSpace" in canvas) {
-				canvas.colorSpace = "srgb";
+				(canvas as any).colorSpace = "srgb";
 			}
 		} catch (error) {
 			// Silently ignore colorSpace errors on platforms that don't support it
@@ -140,7 +150,7 @@ export class FrameRenderer {
 		// Initialize PixiJS with optimized settings for export performance
 		this.app = new Application();
 		await this.app.init({
-			canvas,
+			canvas: canvas as HTMLCanvasElement,
 			width: this.config.width,
 			height: this.config.height,
 			backgroundAlpha: 0,
@@ -161,18 +171,21 @@ export class FrameRenderer {
 		// Setup blur filter for video container
 		this.blurFilter = new BlurFilter();
 		this.blurFilter.quality = 5;
-		this.blurFilter.resolution = this.app.renderer.resolution;
+		this.blurFilter.resolution = (this.app.renderer as any).resolution || 1;
 		this.blurFilter.blur = 0;
 		this.motionBlurFilter = new MotionBlurFilter([0, 0], 5, 0);
 		this.videoContainer.filters = [this.blurFilter, this.motionBlurFilter];
 
 		// Setup composite canvas for final output with shadows
-		this.compositeCanvas = document.createElement("canvas");
+		this.compositeCanvas =
+			typeof document !== "undefined"
+				? document.createElement("canvas")
+				: new OffscreenCanvas(this.config.width, this.config.height);
 		this.compositeCanvas.width = this.config.width;
 		this.compositeCanvas.height = this.config.height;
 		this.compositeCtx = this.compositeCanvas.getContext("2d", {
 			willReadFrequently: false,
-		});
+		}) as any;
 
 		if (!this.compositeCtx) {
 			throw new Error("Failed to get 2D context for composite canvas");
@@ -180,12 +193,15 @@ export class FrameRenderer {
 
 		// Setup shadow canvas if needed
 		if (this.config.showShadow) {
-			this.shadowCanvas = document.createElement("canvas");
+			this.shadowCanvas =
+				typeof document !== "undefined"
+					? document.createElement("canvas")
+					: new OffscreenCanvas(this.config.width, this.config.height);
 			this.shadowCanvas.width = this.config.width;
 			this.shadowCanvas.height = this.config.height;
 			this.shadowCtx = this.shadowCanvas.getContext("2d", {
 				willReadFrequently: false,
-			});
+			}) as any;
 
 			if (!this.shadowCtx) {
 				throw new Error("Failed to get 2D context for shadow canvas");
@@ -198,50 +214,71 @@ export class FrameRenderer {
 		this.videoContainer.mask = this.maskGraphics;
 	}
 
+	private async loadImage(url: string): Promise<HTMLImageElement | ImageBitmap> {
+		if (typeof document !== "undefined") {
+			return new Promise((resolve, reject) => {
+				const img = new Image();
+				if (!url.startsWith("data:") && !url.startsWith(window.location.origin)) {
+					img.crossOrigin = "anonymous";
+				}
+				img.onload = () => resolve(img);
+				img.onerror = reject;
+				img.src = url;
+			});
+		} else {
+			const response = await fetch(url);
+			const blob = await response.blob();
+			return await createImageBitmap(blob);
+		}
+	}
+
 	private async setupBackground(): Promise<void> {
 		const wallpaper = this.config.wallpaper;
 
 		// Create background canvas for separate rendering (not affected by zoom)
-		const bgCanvas = document.createElement("canvas");
+		const bgCanvas =
+			typeof document !== "undefined"
+				? document.createElement("canvas")
+				: new OffscreenCanvas(this.config.width, this.config.height);
 		bgCanvas.width = this.config.width;
 		bgCanvas.height = this.config.height;
-		const bgCtx = bgCanvas.getContext("2d")!;
+		const bgCtx = bgCanvas.getContext("2d") as
+			| CanvasRenderingContext2D
+			| OffscreenCanvasRenderingContext2D;
+		if (!bgCtx) throw new Error("Failed to get 2D context for background canvas");
 
 		try {
 			// Render background based on type
 			if (
+				wallpaper.startsWith("zenscreen://") ||
 				wallpaper.startsWith("file://") ||
 				wallpaper.startsWith("data:") ||
 				wallpaper.startsWith("/") ||
 				wallpaper.startsWith("http")
 			) {
 				// Image background
-				const img = new Image();
-				// Don't set crossOrigin for same-origin images to avoid CORS taint
-				// Only set it for cross-origin URLs
 				let imageUrl: string;
 				if (wallpaper.startsWith("http")) {
 					imageUrl = wallpaper;
-					if (!imageUrl.startsWith(window.location.origin)) {
-						img.crossOrigin = "anonymous";
-					}
-				} else if (wallpaper.startsWith("file://") || wallpaper.startsWith("data:")) {
+				} else if (
+					wallpaper.startsWith("zenscreen://") ||
+					wallpaper.startsWith("file://") ||
+					wallpaper.startsWith("data:")
+				) {
 					imageUrl = wallpaper;
 				} else {
-					imageUrl = window.location.origin + wallpaper;
+					imageUrl =
+						(typeof window !== "undefined" ? window.location.origin : "") +
+						(wallpaper.startsWith("/") ? "" : "/") +
+						wallpaper;
 				}
 
-				await new Promise<void>((resolve, reject) => {
-					img.onload = () => resolve();
-					img.onerror = (err) => {
-						console.error("[FrameRenderer] Failed to load background image:", imageUrl, err);
-						reject(new Error(`Failed to load background image: ${imageUrl}`));
-					};
-					img.src = imageUrl;
-				});
+				const img = await this.loadImage(imageUrl);
 
 				// Draw the image using cover and center positioning
-				const imgAspect = img.width / img.height;
+				const imgWidth = (img as any).width || (img as any).codedWidth;
+				const imgHeight = (img as any).height || (img as any).codedHeight;
+				const imgAspect = imgWidth / imgHeight;
 				const canvasAspect = this.config.width / this.config.height;
 
 				let drawWidth, drawHeight, drawX, drawY;
@@ -258,7 +295,10 @@ export class FrameRenderer {
 					drawY = (this.config.height - drawHeight) / 2;
 				}
 
-				bgCtx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+				bgCtx.drawImage(img as any, drawX, drawY, drawWidth, drawHeight);
+				if ("close" in img && typeof img.close === "function") {
+					(img as any).close();
+				}
 			} else if (wallpaper.startsWith("#")) {
 				bgCtx.fillStyle = wallpaper;
 				bgCtx.fillRect(0, 0, this.config.width, this.config.height);
@@ -696,13 +736,33 @@ export class FrameRenderer {
 			);
 			ctx.restore();
 		}
+
+		if (this.config.watermarkText) {
+			ctx.save();
+			ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+			ctx.font = `bold ${Math.max(24, Math.floor(h * 0.04))}px sans-serif`;
+			ctx.textAlign = "right";
+			ctx.textBaseline = "bottom";
+
+			ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+			ctx.shadowBlur = 4;
+			ctx.shadowOffsetX = 2;
+			ctx.shadowOffsetY = 2;
+
+			ctx.fillText(this.config.watermarkText, w - 24, h - 24);
+			ctx.restore();
+		}
 	}
 
-	getCanvas(): HTMLCanvasElement {
+	getCanvas(): HTMLCanvasElement | OffscreenCanvas {
 		if (!this.compositeCanvas) {
 			throw new Error("Renderer not initialized");
 		}
 		return this.compositeCanvas;
+	}
+
+	isReady(): boolean {
+		return this.app !== null;
 	}
 
 	destroy(): void {

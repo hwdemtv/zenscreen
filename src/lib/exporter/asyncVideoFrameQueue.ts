@@ -14,6 +14,10 @@ export class AsyncVideoFrameQueue {
 	}
 
 	enqueue(frame: VideoFrame) {
+		this.push(frame);
+	}
+
+	push(frame: VideoFrame) {
 		if (this.closed) {
 			frame.close();
 			return;
@@ -42,6 +46,10 @@ export class AsyncVideoFrameQueue {
 	}
 
 	close() {
+		this.done();
+	}
+
+	done() {
 		this.closed = true;
 		const consumers = this.consumers.splice(0);
 		for (const consumer of consumers) {
@@ -65,6 +73,34 @@ export class AsyncVideoFrameQueue {
 		return await new Promise<VideoFrame | null>((resolve, reject) => {
 			this.consumers.push({ resolve, reject });
 		});
+	}
+
+	async getFrameAt(timestampUs: number): Promise<VideoFrame | null> {
+		// Drain frames that are significantly older than requested timestamp
+		const epsilon = 1000; // 1ms
+		while (this.frames.length > 0 && this.frames[0].timestamp < timestampUs - epsilon) {
+			const oldFrame = this.frames.shift();
+			oldFrame?.close();
+		}
+
+		if (this.frames.length > 0 && Math.abs(this.frames[0].timestamp - timestampUs) <= epsilon) {
+			return this.frames.shift()!;
+		}
+
+		if (this.closed && this.frames.length === 0) {
+			return null;
+		}
+
+		// If no frames in queue, wait for the next one
+		const nextFrame = await this.dequeue();
+		if (!nextFrame) return null;
+
+		if (nextFrame.timestamp < timestampUs - epsilon) {
+			nextFrame.close();
+			return this.getFrameAt(timestampUs);
+		}
+
+		return nextFrame;
 	}
 
 	destroy() {

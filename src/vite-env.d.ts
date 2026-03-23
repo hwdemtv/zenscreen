@@ -87,7 +87,7 @@ interface Window {
 		}>;
 		clearCurrentVideoPath: () => Promise<{ success: boolean }>;
 		saveProjectFile: (
-			projectData: unknown,
+			projectData: import("./components/video-editor/projectPersistence").EditorProjectData,
 			suggestedName?: string,
 			existingProjectPath?: string,
 		) => Promise<{
@@ -100,7 +100,7 @@ interface Window {
 		loadProjectFile: () => Promise<{
 			success: boolean;
 			path?: string;
-			project?: unknown;
+			project?: import("./components/video-editor/projectPersistence").EditorProjectData;
 			message?: string;
 			canceled?: boolean;
 			error?: string;
@@ -108,7 +108,7 @@ interface Window {
 		loadCurrentProjectFile: () => Promise<{
 			success: boolean;
 			path?: string;
-			project?: unknown;
+			project?: import("./components/video-editor/projectPersistence").EditorProjectData;
 			message?: string;
 			canceled?: boolean;
 			error?: string;
@@ -120,5 +120,15 @@ interface Window {
 		setHasUnsavedChanges: (hasChanges: boolean) => void;
 		onRequestSaveBeforeClose: (callback: () => Promise<boolean> | boolean) => () => void;
 		setLocale: (locale: string) => Promise<void>;
+		onLocaleChanged: (callback: (locale: string) => void) => () => void;
+		getPlatform: () => Promise<string>;
+		revealInFolder: (filePath: string) => Promise<void>;
+		getShortcuts: () => Promise<unknown>;
+		saveShortcuts: (shortcuts: unknown) => Promise<void>;
+		getLicenseStatus: () => Promise<import("../electron/services/licenseService").LicenseStatus>;
+		verifyLicense: (
+			token: string,
+		) => Promise<import("../electron/services/licenseService").LicenseStatus>;
+		removeLicense: () => Promise<{ success: boolean }>;
 	};
 }

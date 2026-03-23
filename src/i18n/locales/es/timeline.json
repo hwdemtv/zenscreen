@@ -20,7 +20,16 @@
 		"speedItem": "Velocidad {{index}}",
 		"annotationItem": "Anotación",
 		"imageItem": "Imagen",
-		"emptyText": "Texto vacío"
+		"emptyText": "Texto vacío",
+		"trim": "Recorte",
+		"speed": "Velocidad"
+	},
+	"itemActions": {
+		"resizeLeft": "Redimensionar izquierda",
+		"resizeRight": "Redimensionar derecha"
+	},
+	"keyframe": {
+		"title": "Fotograma clave @ {{time}}ms (arrastra para mover, Delete/Backspace para eliminar)"
 	},
 	"emptyState": {
 		"noVideo": "No hay video cargado",

@@ -63,7 +63,25 @@
 	"gifSettings": {
 		"frameRate": "GIF 帧率",
 		"size": "GIF 尺寸",
-		"loop": "循环 GIF"
+		"loop": "循环 GIF",
+		"frameRateLabel": "帧率",
+		"outputSize": "输出尺寸",
+		"loopAnimation": "循环动画",
+		"loopAnimationDescription": "GIF 将持续播放",
+		"sizePresets": {
+			"medium": "中等 (720p)",
+			"large": "大 (1080p)",
+			"original": "原始"
+		},
+		"frameRates": {
+			"fps15": "15 FPS - 平衡",
+			"fps20": "20 FPS - 流畅",
+			"fps25": "25 FPS - 非常流畅",
+			"fps30": "30 FPS - 最高"
+		}
+	},
+	"aspectRatio": {
+		"native": "原始比例"
 	},
 	"project": {
 		"save": "保存项目",
@@ -115,7 +133,14 @@
 		"invalidImageType": "无效的文件类型",
 		"imageFormatsOnly": "请上传 JPG、PNG、GIF 或 WebP 格式的图片文件。",
 		"imageUploadSuccess": "图片上传成功！",
-		"failedImageUpload": "上传图片失败"
+		"failedImageUpload": "上传图片失败",
+		"ariaToggleBold": "切换粗体",
+		"ariaToggleItalic": "切换斜体",
+		"ariaToggleUnderline": "切换下划线",
+		"ariaAlignLeft": "左对齐",
+		"ariaAlignCenter": "居中对齐",
+		"ariaAlignRight": "右对齐",
+		"uploadedImageAlt": "已上传的标注"
 	},
 	"fontStyles": {
 		"classic": "经典",
@@ -129,6 +154,7 @@
 	},
 	"customFont": {
 		"dialogTitle": "添加 Google 字体",
+		"dialogDescription": "添加 Google Fonts 中的自定义字体，用于标注。",
 		"urlLabel": "Google Fonts 导入 URL",
 		"urlPlaceholder": "https://fonts.googleapis.com/css2?family=Roboto&display=swap",
 		"urlHelp": "从 Google Fonts 获取：选择字体 → 点击 \"Get font\" → 复制 @import URL",

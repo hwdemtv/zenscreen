@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
+import type { EditorProjectData } from "../src/components/video-editor/projectPersistence";
 import type { RecordingSession, StoreRecordedSessionInput } from "../src/lib/recordingSession";
 
 contextBridge.exposeInMainWorld("electronAPI", {
@@ -79,7 +80,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	clearCurrentVideoPath: () => {
 		return ipcRenderer.invoke("clear-current-video-path");
 	},
-	saveProjectFile: (projectData: unknown, suggestedName?: string, existingProjectPath?: string) => {
+	saveProjectFile: (
+		projectData: EditorProjectData,
+		suggestedName?: string,
+		existingProjectPath?: string,
+	) => {
 		return ipcRenderer.invoke("save-project-file", projectData, suggestedName, existingProjectPath);
 	},
 	loadProjectFile: () => {
@@ -112,8 +117,17 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	getShortcuts: () => {
 		return ipcRenderer.invoke("get-shortcuts");
 	},
-	saveShortcuts: (shortcuts: unknown) => {
+	saveShortcuts: (shortcuts: Record<string, string>) => {
 		return ipcRenderer.invoke("save-shortcuts", shortcuts);
+	},
+	getLicenseStatus: () => {
+		return ipcRenderer.invoke("get-license-status");
+	},
+	verifyLicense: (token: string) => {
+		return ipcRenderer.invoke("verify-license", token);
+	},
+	removeLicense: () => {
+		return ipcRenderer.invoke("remove-license");
 	},
 	setLocale: (locale: string) => {
 		return ipcRenderer.invoke("set-locale", locale);
@@ -123,6 +137,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	},
 	setHasUnsavedChanges: (hasChanges: boolean) => {
 		ipcRenderer.send("set-has-unsaved-changes", hasChanges);
+	},
+	onLocaleChanged: (callback: (locale: string) => void) => {
+		const listener = (_: unknown, locale: string) => callback(locale);
+		ipcRenderer.on("locale-changed", listener);
+		return () => ipcRenderer.removeListener("locale-changed", listener);
 	},
 	onRequestSaveBeforeClose: (callback: () => Promise<boolean> | boolean) => {
 		const listener = async () => {

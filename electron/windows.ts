@@ -90,14 +90,14 @@ export function createEditorWindow(): BrowserWindow {
 		resizable: true,
 		alwaysOnTop: false,
 		skipTaskbar: false,
-		title: "OpenScreen",
+		title: "ZenScreen",
 		backgroundColor: "#000000",
 		show: !HEADLESS,
 		webPreferences: {
 			preload: path.join(__dirname, "preload.mjs"),
 			nodeIntegration: false,
 			contextIsolation: true,
-			webSecurity: false,
+			webSecurity: true,
 			backgroundThrottling: false,
 		},
 	});

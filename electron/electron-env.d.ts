@@ -137,6 +137,10 @@ interface Window {
 		setHasUnsavedChanges: (hasChanges: boolean) => void;
 		onRequestSaveBeforeClose: (callback: () => Promise<boolean> | boolean) => () => void;
 		setLocale: (locale: string) => Promise<void>;
+		onLocaleChanged: (callback: (locale: string) => void) => () => void;
+		getLicenseStatus: () => Promise<import("./services/licenseService").LicenseStatus>;
+		verifyLicense: (token: string) => Promise<import("./services/licenseService").LicenseStatus>;
+		removeLicense: () => Promise<{ success: boolean }>;
 	};
 }
 

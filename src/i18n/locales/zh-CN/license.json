@@ -1,0 +1,39 @@
+{
+	"title": {
+		"activatePro": "激活 Pro",
+		"proLicenseActive": "Pro 许可证已激活"
+	},
+	"description": {
+		"active": "您的设备已完全解锁，尽情享受所有高级功能。",
+		"inactive": "输入激活码以解锁高级功能并移除水印。"
+	},
+	"badge": {
+		"pro": "PRO",
+		"upgrade": "升级到 PRO"
+	},
+	"status": {
+		"validUntil": "有效期至",
+		"lifetime": "永久授权"
+	},
+	"fields": {
+		"hardwareFingerprint": "硬件指纹",
+		"provideWhenPurchasing": "购买时提供此信息",
+		"activationToken": "产品卡密",
+		"tokenPlaceholder": "在此粘贴您的授权卡密 (License Key)...",
+		"deviceId": "设备 ID"
+	},
+	"actions": {
+		"activate": "激活 ZenScreen",
+		"removeLicense": "移除许可证"
+	},
+	"feedback": {
+		"machineIdCopied": "机器码已复制到剪贴板！",
+		"upgradeSuccess": "成功升级到 Pro！",
+		"activateFailed": "激活失败。",
+		"licenseRemoved": "许可证已移除。",
+		"loading": "加载中..."
+	},
+	"watermark": {
+		"demo": "ZenScreen Demo"
+	}
+}

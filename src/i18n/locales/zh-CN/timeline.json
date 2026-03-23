@@ -20,7 +20,16 @@
 		"speedItem": "速度 {{index}}",
 		"annotationItem": "标注",
 		"imageItem": "图片",
-		"emptyText": "空文本"
+		"emptyText": "空文本",
+		"trim": "剪辑",
+		"speed": "速度"
+	},
+	"itemActions": {
+		"resizeLeft": "调整左侧",
+		"resizeRight": "调整右侧"
+	},
+	"keyframe": {
+		"title": "关键帧 @ {{time}}ms（拖动移动，Delete/Backspace 删除）"
 	},
 	"emptyState": {
 		"noVideo": "未加载视频",

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export interface AudioLevelMeterOptions {
 	enabled: boolean;
 	deviceId?: string;
+	stream?: MediaStream | null;
 	smoothingFactor?: number;
 }
 
@@ -40,19 +41,26 @@ export function useAudioLevelMeter(options: AudioLevelMeterOptions) {
 
 		const startMonitoring = async () => {
 			try {
-				const constraints: MediaStreamConstraints = {
-					audio: options.deviceId ? { deviceId: { exact: options.deviceId } } : true,
-					video: false,
-				};
+				let stream: MediaStream;
 
-				const stream = await navigator.mediaDevices.getUserMedia(constraints);
+				if (options.stream) {
+					stream = options.stream;
+				} else {
+					const constraints: MediaStreamConstraints = {
+						audio: options.deviceId ? { deviceId: { exact: options.deviceId } } : true,
+						video: false,
+					};
+					stream = await navigator.mediaDevices.getUserMedia(constraints);
+				}
 
 				if (!mounted) {
-					stream.getTracks().forEach((track) => track.stop());
+					if (!options.stream) {
+						stream.getTracks().forEach((track) => track.stop());
+					}
 					return;
 				}
 
-				streamRef.current = stream;
+				streamRef.current = options.stream ? null : stream;
 
 				const audioContext = new AudioContext();
 				if (audioContext.state === "suspended") {
@@ -101,7 +109,7 @@ export function useAudioLevelMeter(options: AudioLevelMeterOptions) {
 			mounted = false;
 			cleanup();
 		};
-	}, [options.enabled, options.deviceId, options.smoothingFactor, cleanup]);
+	}, [options.enabled, options.deviceId, options.smoothingFactor, options.stream, cleanup]);
 
 	return { level };
 }

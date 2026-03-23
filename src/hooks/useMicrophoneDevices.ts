@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useScopedT } from "@/contexts/I18nContext";
 
 export interface MicrophoneDevice {
 	deviceId: string;
@@ -7,6 +8,7 @@ export interface MicrophoneDevice {
 }
 
 export function useMicrophoneDevices(enabled: boolean = true) {
+	const t = useScopedT("editor");
 	const [devices, setDevices] = useState<MicrophoneDevice[]>([]);
 	const [selectedDeviceId, setSelectedDeviceId] = useState<string>("default");
 	const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +51,7 @@ export function useMicrophoneDevices(enabled: boolean = true) {
 			} catch (err) {
 				if (mounted) {
 					const errorMessage =
-						err instanceof Error ? err.message : "Failed to enumerate audio devices";
+						err instanceof Error ? err.message : t("recording.failedToEnumerateAudio");
 					setError(errorMessage);
 					setIsLoading(false);
 					console.error("Error loading microphone devices:", err);
@@ -69,7 +71,7 @@ export function useMicrophoneDevices(enabled: boolean = true) {
 			mounted = false;
 			navigator.mediaDevices.removeEventListener("devicechange", handleDeviceChange);
 		};
-	}, [enabled, selectedDeviceId]);
+	}, [enabled, selectedDeviceId, t]);
 
 	return {
 		devices,

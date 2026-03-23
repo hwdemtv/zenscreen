@@ -286,7 +286,7 @@ export function AnnotationSettingsPanel({
 								>
 									<ToggleGroupItem
 										value="bold"
-										aria-label="Toggle bold"
+										aria-label={t("annotation.ariaToggleBold")}
 										data-state={annotation.style.fontWeight === "bold" ? "on" : "off"}
 										onClick={() =>
 											onStyleChange({
@@ -299,7 +299,7 @@ export function AnnotationSettingsPanel({
 									</ToggleGroupItem>
 									<ToggleGroupItem
 										value="italic"
-										aria-label="Toggle italic"
+										aria-label={t("annotation.ariaToggleItalic")}
 										data-state={annotation.style.fontStyle === "italic" ? "on" : "off"}
 										onClick={() =>
 											onStyleChange({
@@ -312,7 +312,7 @@ export function AnnotationSettingsPanel({
 									</ToggleGroupItem>
 									<ToggleGroupItem
 										value="underline"
-										aria-label="Toggle underline"
+										aria-label={t("annotation.ariaToggleUnderline")}
 										data-state={annotation.style.textDecoration === "underline" ? "on" : "off"}
 										onClick={() =>
 											onStyleChange({
@@ -333,7 +333,7 @@ export function AnnotationSettingsPanel({
 								>
 									<ToggleGroupItem
 										value="left"
-										aria-label="Align left"
+										aria-label={t("annotation.ariaAlignLeft")}
 										onClick={() => onStyleChange({ textAlign: "left" })}
 										className="h-8 w-8 data-[state=on]:bg-[#34B27B] data-[state=on]:text-white text-slate-400 hover:bg-white/5 hover:text-slate-200"
 									>
@@ -341,7 +341,7 @@ export function AnnotationSettingsPanel({
 									</ToggleGroupItem>
 									<ToggleGroupItem
 										value="center"
-										aria-label="Align center"
+										aria-label={t("annotation.ariaAlignCenter")}
 										onClick={() => onStyleChange({ textAlign: "center" })}
 										className="h-8 w-8 data-[state=on]:bg-[#34B27B] data-[state=on]:text-white text-slate-400 hover:bg-white/5 hover:text-slate-200"
 									>
@@ -349,7 +349,7 @@ export function AnnotationSettingsPanel({
 									</ToggleGroupItem>
 									<ToggleGroupItem
 										value="right"
-										aria-label="Align right"
+										aria-label={t("annotation.ariaAlignRight")}
 										onClick={() => onStyleChange({ textAlign: "right" })}
 										className="h-8 w-8 data-[state=on]:bg-[#34B27B] data-[state=on]:text-white text-slate-400 hover:bg-white/5 hover:text-slate-200"
 									>
@@ -473,7 +473,7 @@ export function AnnotationSettingsPanel({
 							<div className="rounded-lg border border-white/10 overflow-hidden bg-white/5 p-2">
 								<img
 									src={annotation.content}
-									alt="Uploaded annotation"
+									alt={t("annotation.uploadedImageAlt")}
 									className="w-full h-auto rounded-md"
 								/>
 							</div>

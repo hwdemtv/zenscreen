@@ -17,7 +17,7 @@ export function KeyboardShortcutsHelp() {
 					<button
 						type="button"
 						onClick={openConfig}
-						title="Customize shortcuts"
+						title={t("customize")}
 						className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-[#34B27B] transition-colors"
 					>
 						<Settings2 className="w-3 h-3" />
@@ -38,7 +38,7 @@ export function KeyboardShortcutsHelp() {
 					<div className="pt-1 border-t border-white/5 mt-1 space-y-1.5">
 						{FIXED_SHORTCUTS.map((fixed) => (
 							<div key={fixed.label} className="flex items-center justify-between">
-								<span className="text-slate-400">{fixed.label}</span>
+								<span className="text-slate-400">{t(`fixedActions.${fixed.label}`)}</span>
 								<kbd className="px-1 py-0.5 bg-white/5 border border-white/10 rounded text-[#34B27B] font-mono">
 									{isMac
 										? fixed.display

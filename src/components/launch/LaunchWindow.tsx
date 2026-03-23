@@ -16,9 +16,16 @@ import {
 	MdVolumeUp,
 } from "react-icons/md";
 import { RxDragHandleDots2 } from "react-icons/rx";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useI18n, useScopedT } from "@/contexts/I18nContext";
-import { type Locale, SUPPORTED_LOCALES } from "@/i18n/config";
+import { SUPPORTED_LOCALES } from "@/i18n/config";
 import { getLocaleName } from "@/i18n/loader";
+import { cn } from "@/lib/utils";
 import { isMac as getIsMac } from "@/utils/platformUtils";
 import { useAudioLevelMeter } from "../../hooks/useAudioLevelMeter";
 import { useMicrophoneDevices } from "../../hooks/useMicrophoneDevices";
@@ -86,16 +93,20 @@ export function LaunchWindow() {
 		setSystemAudioEnabled,
 		webcamEnabled,
 		setWebcamEnabled,
+		stream: recordingStream,
 	} = useScreenRecorder();
+
+	const { devices, selectedDeviceId, setSelectedDeviceId } =
+		useMicrophoneDevices(microphoneEnabled);
+
 	const [recordingStart, setRecordingStart] = useState<number | null>(null);
 	const [elapsed, setElapsed] = useState(0);
 
 	const showMicControls = microphoneEnabled && !recording;
-	const { devices, selectedDeviceId, setSelectedDeviceId } =
-		useMicrophoneDevices(microphoneEnabled);
 	const { level } = useAudioLevelMeter({
-		enabled: showMicControls,
+		enabled: showMicControls || recording,
 		deviceId: microphoneDeviceId,
+		stream: recording ? recordingStream : null,
 	});
 
 	useEffect(() => {
@@ -200,24 +211,37 @@ export function LaunchWindow() {
 
 	return (
 		<div className="w-full h-full flex items-end justify-center bg-transparent relative">
-			{/* Language switcher — top-left, beside traffic lights */}
-			<div
-				className={`absolute top-2 flex items-center gap-1 px-2 py-1 rounded-md text-white/50 hover:text-white/90 hover:bg-white/10 transition-all duration-150 ${isMac ? "left-[72px]" : "left-2"} ${styles.electronNoDrag}`}
-			>
-				<Languages size={14} />
-				<select
-					value={locale}
-					onChange={(e) => setLocale(e.target.value as Locale)}
-					className="bg-transparent text-[11px] font-medium outline-none cursor-pointer appearance-none pr-1"
-					style={{ color: "inherit" }}
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<button
+						type="button"
+						className={`absolute top-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-white/50 hover:text-white/90 hover:bg-white/10 transition-all duration-200 border border-transparent hover:border-white/10 ${isMac ? "left-[72px]" : "left-2"} ${styles.electronNoDrag} group`}
+					>
+						<Languages size={14} className="group-hover:scale-110 transition-transform" />
+						<span className="text-[11px] font-medium">{getLocaleName(locale)}</span>
+						<ChevronDown size={10} className="opacity-50 group-hover:opacity-100" />
+					</button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent
+					side="bottom"
+					align="start"
+					className="bg-[#1c1c24]/95 backdrop-blur-md border-white/10 text-white min-w-[120px] rounded-xl shadow-2xl p-1 animate-in fade-in slide-in-from-top-1"
 				>
 					{SUPPORTED_LOCALES.map((loc) => (
-						<option key={loc} value={loc} className="bg-[#1c1c24] text-white">
+						<DropdownMenuItem
+							key={loc}
+							onClick={() => setLocale(loc)}
+							className={cn(
+								"flex items-center justify-between px-3 py-2 text-[11px] rounded-lg cursor-pointer transition-colors focus:bg-white/10 focus:text-white",
+								locale === loc ? "bg-white/5 text-green-400 font-semibold" : "text-white/70",
+							)}
+						>
 							{getLocaleName(loc)}
-						</option>
+							{locale === loc && <div className="w-1 h-1 rounded-full bg-green-400" />}
+						</DropdownMenuItem>
 					))}
-				</select>
-			</div>
+				</DropdownMenuContent>
+			</DropdownMenu>
 
 			<div className={`flex flex-col items-center gap-2 mx-auto ${styles.electronDrag}`}>
 				{/* Mic controls panel */}
@@ -321,6 +345,9 @@ export function LaunchWindow() {
 								<span className="text-red-400 text-xs font-semibold tabular-nums">
 									{formatTimePadded(elapsed)}
 								</span>
+								{(microphoneEnabled || systemAudioEnabled) && (
+									<AudioLevelMeter level={level} className="w-12 h-3 ml-1.5 opacity-80" />
+								)}
 							</>
 						) : (
 							getIcon("record", hasSelectedSource ? "text-white/80" : "text-white/30")

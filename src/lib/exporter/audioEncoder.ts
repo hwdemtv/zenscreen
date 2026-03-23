@@ -46,7 +46,7 @@ export class AudioProcessor {
 		await this.processTrimOnlyAudio(demuxer, muxer, sortedTrims, readEndSec);
 	}
 
-	// Legacy trim-only path. This is still used for projects without speed regions.
+	// Optimized stream-only path. Decodes and re-encodes chunks without buffering all frames in memory.
 	private async processTrimOnlyAudio(
 		demuxer: WebDemuxer,
 		muxer: VideoMuxer,
@@ -67,15 +67,66 @@ export class AudioProcessor {
 			return;
 		}
 
-		// Phase 1: Decode audio from source, skipping trimmed regions
-		const decodedFrames: AudioData[] = [];
+		// Phase 1: Setup Encoder & Decoder
+		const channels = audioConfig.numberOfChannels || 2;
+		const encodeConfig: AudioEncoderConfig = {
+			codec: "mp4a.40.2", // AAC-LC
+			sampleRate: audioConfig.sampleRate || 44100,
+			numberOfChannels: channels,
+			bitrate: AUDIO_BITRATE,
+		};
+
+		const encodeSupport = await AudioEncoder.isConfigSupported(encodeConfig);
+		if (!encodeSupport.supported) {
+			console.warn("[AudioProcessor] AAC encoding not supported, skipping audio");
+			return;
+		}
+
+		let encodeError: Error | null = null;
+		const encoder = new AudioEncoder({
+			output: (chunk: EncodedAudioChunk, meta?: EncodedAudioChunkMetadata) => {
+				muxer.addAudioChunk(chunk, meta).catch((e) => {
+					console.error("[AudioProcessor] Muxing error:", e);
+					encodeError = e instanceof Error ? e : new Error(String(e));
+				});
+			},
+			error: (e: DOMException) => {
+				console.error("[AudioProcessor] Encode error:", e);
+				encodeError = new Error(`Audio encoding error: ${e.message}`);
+			},
+		});
+		encoder.configure(encodeConfig);
 
 		const decoder = new AudioDecoder({
-			output: (data: AudioData) => decodedFrames.push(data),
-			error: (e: DOMException) => console.error("[AudioProcessor] Decode error:", e),
+			output: (audioData: AudioData) => {
+				try {
+					if (this.cancelled || encodeError) {
+						audioData.close();
+						return;
+					}
+
+					const timestampMs = audioData.timestamp / 1000;
+					const trimOffsetMs = this.computeTrimOffset(timestampMs, sortedTrims);
+					const adjustedTimestampUs = audioData.timestamp - trimOffsetMs * 1000;
+
+					const adjusted = this.cloneWithTimestamp(audioData, Math.max(0, adjustedTimestampUs));
+					audioData.close();
+
+					encoder.encode(adjusted);
+					adjusted.close();
+				} catch (err) {
+					console.error("[AudioProcessor] Processing error:", err);
+					encodeError = err instanceof Error ? err : new Error(String(err));
+				}
+			},
+			error: (e: DOMException) => {
+				console.error("[AudioProcessor] Decode error:", e);
+				encodeError = new Error(`Audio decoding error: ${e.message}`);
+			},
 		});
 		decoder.configure(audioConfig);
 
+		// Phase 2: Feed data through the pipeline
 		const safeReadEndSec =
 			typeof readEndSec === "number" && Number.isFinite(readEndSec)
 				? Math.max(0, readEndSec)
@@ -88,7 +139,7 @@ export class AudioProcessor {
 		const reader = audioStream.getReader();
 
 		try {
-			while (!this.cancelled) {
+			while (!this.cancelled && !encodeError) {
 				const { done, value: chunk } = await reader.read();
 				if (done || !chunk) break;
 
@@ -97,7 +148,12 @@ export class AudioProcessor {
 
 				decoder.decode(chunk);
 
-				while (decoder.decodeQueueSize > DECODE_BACKPRESSURE_LIMIT && !this.cancelled) {
+				while (
+					(decoder.decodeQueueSize > DECODE_BACKPRESSURE_LIMIT ||
+						encoder.encodeQueueSize > DECODE_BACKPRESSURE_LIMIT) &&
+					!this.cancelled &&
+					!encodeError
+				) {
 					await new Promise((resolve) => setTimeout(resolve, 1));
 				}
 			}
@@ -109,60 +165,14 @@ export class AudioProcessor {
 			}
 		}
 
+		if (encodeError) {
+			throw encodeError;
+		}
+
+		// Phase 3: Flush
 		if (decoder.state === "configured") {
 			await decoder.flush();
 			decoder.close();
-		}
-
-		if (this.cancelled || decodedFrames.length === 0) {
-			for (const frame of decodedFrames) frame.close();
-			return;
-		}
-
-		// Phase 2: Re-encode with timestamps adjusted for trim gaps
-		const encodedChunks: { chunk: EncodedAudioChunk; meta?: EncodedAudioChunkMetadata }[] = [];
-
-		const encoder = new AudioEncoder({
-			output: (chunk: EncodedAudioChunk, meta?: EncodedAudioChunkMetadata) => {
-				encodedChunks.push({ chunk, meta });
-			},
-			error: (e: DOMException) => console.error("[AudioProcessor] Encode error:", e),
-		});
-
-		const sampleRate = audioConfig.sampleRate || 48000;
-		const channels = audioConfig.numberOfChannels || 2;
-
-		const encodeConfig: AudioEncoderConfig = {
-			codec: "opus",
-			sampleRate,
-			numberOfChannels: channels,
-			bitrate: AUDIO_BITRATE,
-		};
-
-		const encodeSupport = await AudioEncoder.isConfigSupported(encodeConfig);
-		if (!encodeSupport.supported) {
-			console.warn("[AudioProcessor] Opus encoding not supported, skipping audio");
-			for (const frame of decodedFrames) frame.close();
-			return;
-		}
-
-		encoder.configure(encodeConfig);
-
-		for (const audioData of decodedFrames) {
-			if (this.cancelled) {
-				audioData.close();
-				continue;
-			}
-
-			const timestampMs = audioData.timestamp / 1000;
-			const trimOffsetMs = this.computeTrimOffset(timestampMs, sortedTrims);
-			const adjustedTimestampUs = audioData.timestamp - trimOffsetMs * 1000;
-
-			const adjusted = this.cloneWithTimestamp(audioData, Math.max(0, adjustedTimestampUs));
-			audioData.close();
-
-			encoder.encode(adjusted);
-			adjusted.close();
 		}
 
 		if (encoder.state === "configured") {
@@ -170,15 +180,7 @@ export class AudioProcessor {
 			encoder.close();
 		}
 
-		// Phase 3: Flush encoded chunks to muxer
-		for (const { chunk, meta } of encodedChunks) {
-			if (this.cancelled) break;
-			await muxer.addAudioChunk(chunk, meta);
-		}
-
-		console.log(
-			`[AudioProcessor] Processed ${decodedFrames.length} audio frames, encoded ${encodedChunks.length} chunks`,
-		);
+		console.log("[AudioProcessor] Streaming audio processing complete.");
 	}
 
 	// Speed-aware path that mirrors preview semantics (trim skipping + playbackRate regions)
